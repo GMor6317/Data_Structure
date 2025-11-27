@@ -446,3 +446,5 @@ int main(int argc, char* argv[]){
     std::cout << soundexGenerator("Arrum") << std::endl;
     std::cout << soundexGenerator("Aarn") << std::endl;
 }
+
+//Hola, esto es una prueba
