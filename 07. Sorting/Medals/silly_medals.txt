@@ -1,0 +1,3 @@
+Thunderbolts* 1 2 3
+Rascals 3 1 2
+Golden Girls 4 0 0

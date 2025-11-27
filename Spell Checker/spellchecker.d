@@ -1,0 +1,1 @@
+./spellchecker.o: spellchecker.cpp
