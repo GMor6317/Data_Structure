@@ -19,23 +19,23 @@ struct Word {
         return text == other.text && line == other.line && column == other.column; 
     } 
     
-    // bool operator<(const Word& other) const{ 
-    //     // if(line != other.line){ 
-    //     // return line < other.line; 
-    //     // } 
-    //     // if(column != other.column){ 
-    //     // return column < other.column; 
-    //     // } 
-    //     // return text < other.text; 
-    //     // } 
-    //     if(!(text != other.text)){ 
-    //         return text < other.text; 
-    //     } 
-    //     if(line != other.line){ 
-    //         return line < other.line; 
-    //     } 
-    //     return column < other.column; 
-    // } 
+    bool operator<(const Word& other) const{ 
+        // if(line != other.line){ 
+        // return line < other.line; 
+        // } 
+        // if(column != other.column){ 
+        // return column < other.column; 
+        // } 
+        // return text < other.text; 
+        // } 
+        if(!(text != other.text)){ 
+            return text < other.text; 
+        } 
+        if(line != other.line){ 
+            return line < other.line; 
+        } 
+        return column < other.column; 
+    } 
 }; 
 
 // class MyHashFunction{ 
@@ -69,50 +69,48 @@ bool read_words(const std::string input_file_name,std::vector<Word>& words) {
 } 
     
 //Soundex generator function 
-std::string soundexGenerator(const std::string& token){ 
-    if(token.empty()){ 
-        return ""; 
-    } 
-    std::string upperToken; 
-    for(char c : token){ 
-        upperToken += toupper(c); 
-    } 
-    std::string soundex = ""; 
-    soundex += upperToken[0]; 
-    std::unordered_map<std::string, std::string> dictionary = { 
-        {"BFPV", "1"}, 
-        {"CGJKQSXZ", "2"}, 
-        {"DT", "3"}, 
+std::string soundexGenerator(const std::string& token){
+    std::string uppertoken = "";
+    for(char c : token){
+        uppertoken += toupper(c);
+    }
+
+    std::string soundex = "";
+
+    soundex += token[0];
+
+    std::unordered_map<std::string, std::string> dictionary{
+        {"BFPV","1"}, 
+        {"CGJKQSXZ", "2"},       
+        {"DT", "3"},
         {"L", "4"}, 
         {"MN", "5"}, 
-        {"R", "6"}, 
-        {"AEIOUHWY", "."} 
-    }; 
-    
-    for(size_t i = 1; i < upperToken.size(); i++){ 
-        char c = upperToken[i]; 
-        std::string code = " "; 
-        
-        for(auto& key : dictionary){ 
-            if(key.first.find(c) != std::string::npos){ 
-                code = key.second; 
-                break; 
-            } 
-        } 
-        
-        if(!code.empty() && code != "."){ 
-            if(code != std::string(1, soundex.back())){ 
-                soundex += code; 
-            } 
-        } 
-    } 
-    if(soundex.size() > 7){ 
-        soundex = soundex.substr(0,7); 
-    } else{ 
-        soundex.append(7 - soundex.size(), '0'); 
-    } 
-    return soundex; 
-} 
+        {"R", "6"},
+        {"AEIOUHWY", "."}
+    };
+
+    for(int i = 1; i < uppertoken.size(); i++){
+        char c = uppertoken[i];
+        std::string code = "";
+        for(auto& key : dictionary){
+            if(key.first.find(c) != std::string::npos){
+                code = key.second;
+                if(code != "."){
+                    soundex += code;
+                }
+            }
+        }
+    }
+    const size_t max_length = 7;
+    if(soundex.size() > max_length){
+        soundex = soundex.substr(0, max_length);
+    } else{
+        while(soundex.length() < max_length){
+            soundex += "0";
+        }
+    }
+    return soundex;
+}
 
 //Function that creates a dictionary with same soundex words 
 bool buildSoundexDictionary(const std::string fileName, std::unordered_map<std::string, std::vector<std::string>>& soundex_dictionary, std::unordered_set<std::string>& words_dictionary){ 
@@ -127,9 +125,13 @@ bool buildSoundexDictionary(const std::string fileName, std::unordered_map<std::
     while(std::getline(file, text)){ 
         while(std::regex_search(text, match, reg_exp)){ 
             std::string word = match.str(); 
-            std::string code = soundexGenerator(word); 
-            soundex_dictionary[code].push_back(word); 
-            words_dictionary.insert(word); 
+            std::string lower;
+            for(char c : word){
+                lower += tolower(c);
+            }
+            std::string code = soundexGenerator(lower); 
+            soundex_dictionary[code].push_back(lower); 
+            words_dictionary.insert(lower); 
             text = match.suffix().str(); 
         } 
     } 
@@ -143,13 +145,12 @@ std::string suggest_words(const std::string& word, const std::unordered_map<std:
     auto word_in = soundex_dictionary.find(soundex); 
     if(word_in != soundex_dictionary.end()){ 
         std::string suggestions = "Suggestions: "; 
-        bool first = true; 
-        std::cout << suggestions; 
+        bool first = true;  
         for(const std::string& suggested_word : word_in -> second){ 
             if(!first){ 
-                std::cout << ", "; 
+                suggestions += ", "; 
             } 
-            std::cout << suggested_word; 
+            suggestions += suggested_word; 
             first = false; 
         } 
         return suggestions; 
@@ -159,6 +160,7 @@ std::string suggest_words(const std::string& word, const std::unordered_map<std:
 
 bool identify_unrecognized_words(const std::string& fileName, const std::unordered_set<std::string>& word_dictionary, const std::unordered_map<std::string, std::vector<std::string>>& soundex_dictionary){ 
     std::set<Word> unrecognized_words; 
+    std::vector<std::string> v_unrecognized_words;
     std::ifstream file(fileName); 
     if(file.fail()){ 
         std::cerr << "Unable to open file: " << fileName << std::endl; 
@@ -181,7 +183,9 @@ bool identify_unrecognized_words(const std::string& fileName, const std::unorder
             } 
             if(word_dictionary.find(lower) == word_dictionary.end()){ 
                 Word w{lower, line, column}; 
-                if(unrecognized_words.find(w)== unrecognized_words.end()){ 
+                auto is_first_unrecognized = std::find(v_unrecognized_words.begin(), v_unrecognized_words.end(), lower);
+                if(is_first_unrecognized == v_unrecognized_words.end()){
+                    v_unrecognized_words.push_back(lower);
                     unrecognized_words.insert(w); 
                 } 
             } 
