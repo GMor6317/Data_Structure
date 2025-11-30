@@ -1,3 +1,13 @@
+/*----------------------------------------------------------
+ * Project: Spell Checker
+ *
+ * Date: 03-Dec-2025
+ * Authors:
+ *           A01803172 Giancarlo Moreno
+ *           A01277159 Leonardo González
+ *           A01748498 Emiliano Díaz
+ *----------------------------------------------------------*/
+
 #include <fstream> 
 #include <regex> 
 #include <vector> 
@@ -6,28 +16,15 @@
 #include <unordered_set> 
 #include <vector> 
 #include <cctype> 
-#include <string> 
-#include <fstream> 
-#include <set> 
+#include <set>
+#include <chrono>
 
 struct Word { 
     std::string text; 
     int line; 
     int column; 
 
-    bool operator==(const Word& other) const{ 
-        return text == other.text && line == other.line && column == other.column; 
-    } 
-    
     bool operator<(const Word& other) const{ 
-        // if(line != other.line){ 
-        // return line < other.line; 
-        // } 
-        // if(column != other.column){ 
-        // return column < other.column; 
-        // } 
-        // return text < other.text; 
-        // } 
         if(!(text != other.text)){ 
             return text < other.text; 
         } 
@@ -37,36 +34,6 @@ struct Word {
         return column < other.column; 
     } 
 }; 
-
-// class MyHashFunction{ 
-// public: 
-// std::size_t operator()(const word& w) const{ 
-// return (std::hash<std::string>()(w.text)) ^ (std::hash<int>()(w.line)) ^ (std::hash<int>()(w.column)); 
-// } 
-// }; 
-//Read words function 
-bool read_words(const std::string input_file_name,std::vector<Word>& words) { 
-    std::ifstream input_file(input_file_name); 
-    if (input_file.fail()) { 
-        return false; 
-    } 
-    std::regex reg_exp("[a-zA-Z]+"); 
-    std::smatch match; 
-    std::string text; 
-    int line = 0; 
-    int column = 0; 
-    while (std::getline(input_file, text)) { 
-        ++line; 
-        column = 1; 
-        while (std::regex_search(text, match, reg_exp)) { 
-            column += match.position(); 
-            words.push_back({match.str(), line, column}); 
-            column += match.length(); 
-            text = match.suffix().str(); 
-        } 
-    } 
-    return true;
-} 
     
 //Soundex generator function 
 std::string soundexGenerator(const std::string& token){
@@ -76,7 +43,6 @@ std::string soundexGenerator(const std::string& token){
     }
 
     std::string soundex = "";
-
     soundex += token[0];
 
     std::unordered_map<std::string, std::string> dictionary{
@@ -101,6 +67,7 @@ std::string soundexGenerator(const std::string& token){
             }
         }
     }
+
     const size_t max_length = 7;
     if(soundex.size() > max_length){
         soundex = soundex.substr(0, max_length);
@@ -112,12 +79,12 @@ std::string soundexGenerator(const std::string& token){
     return soundex;
 }
 
-//Function that creates a dictionary with same soundex words 
-bool buildSoundexDictionary(const std::string fileName, std::unordered_map<std::string, std::vector<std::string>>& soundex_dictionary, std::unordered_set<std::string>& words_dictionary){ 
+//Function that creates a dictionary with words that have the same soundex in the words.txt 
+void buildSoundexDictionary(const std::string fileName, std::unordered_map<std::string, std::vector<std::string>>& soundex_dictionary, std::unordered_set<std::string>& words_dictionary){ 
     std::ifstream file(fileName); 
     if(file.fail()){ 
         std::cerr << "Unable to open file: " << fileName << std::endl; 
-        return false; 
+        return; 
     } 
     std::regex reg_exp("[a-zA-Z]+"); 
     std::smatch match; 
@@ -136,17 +103,17 @@ bool buildSoundexDictionary(const std::string fileName, std::unordered_map<std::
         } 
     } 
     file.close(); 
-    return true; 
+    return; 
 } 
 
-//Function to return all the words with the same soundex 
+//Function to join all the words with the same soundex 
 std::string suggest_words(const std::string& word, const std::unordered_map<std::string, std::vector<std::string>> soundex_dictionary){ 
     std::string soundex = soundexGenerator(word); 
-    auto word_in = soundex_dictionary.find(soundex); 
-    if(word_in != soundex_dictionary.end()){ 
+    auto found_soundex = soundex_dictionary.find(soundex); 
+    if(found_soundex != soundex_dictionary.end()){ 
         std::string suggestions = "Suggestions: "; 
         bool first = true;  
-        for(const std::string& suggested_word : word_in -> second){ 
+        for(const std::string& suggested_word : found_soundex -> second){ 
             if(!first){ 
                 suggestions += ", "; 
             } 
@@ -155,9 +122,10 @@ std::string suggest_words(const std::string& word, const std::unordered_map<std:
         } 
         return suggestions; 
     } 
-    return "No suggestions"; 
+    return "No suggestions."; 
 } 
 
+//Function to create a set of the unrecognized words of the .txt
 void identify_unrecognized_words(const std::string& fileName, const std::unordered_set<std::string>& word_dictionary, const std::unordered_map<std::string, std::vector<std::string>>& soundex_dictionary){ 
     std::set<Word> unrecognized_words; 
     std::vector<std::string> v_unrecognized_words;
@@ -201,6 +169,7 @@ void identify_unrecognized_words(const std::string& fileName, const std::unorder
     return; 
 }
 
+//Auxiliary function to print the words in a dictionary 
 void print_dictionary(const std::unordered_map<std::string, std::vector<std::string>> dictionary_name){ 
     for(const auto& data : dictionary_name){ 
         std::cout << data.first << ":"; 
@@ -222,18 +191,30 @@ int main(int argc, char* argv[]){
         std::exit(1); 
     } 
     std::string file_name = argv[1]; 
+
     std::unordered_map<std::string, std::vector<std::string>> soundex_dictionary; 
-    std::unordered_set<std::string> word_dictionary; 
-    std::cout << buildSoundexDictionary("words.txt",soundex_dictionary, word_dictionary) << std::endl; 
-    // print_dictionary(soundex_dictionary); 
+    std::unordered_set<std::string> word_dictionary;
+    
+    //Creating the soundex dictionary of every word in the words.txt
+    buildSoundexDictionary("words.txt",soundex_dictionary, word_dictionary); 
+
+    //---------- Extra functions to verify the correct functionality of the functions ----------/
+    // std::cout << "Here is the space for the extra tests" << std::endl;
+    // print_dictionary(soundex_dictionary);
+    // std::cout << soundexGenerator("Arrum") << std::endl; 
+    // std::cout << soundexGenerator("aroma") << std::endl;  
     // std::cout << soundexGenerator("Bangalore") << std::endl; 
     // std::cout << soundexGenerator("GeeksforGeeks") << std::endl; 
+
+    //Identify the unrecognized words of the given .txt
+    auto start = std::chrono::high_resolution_clock::now();
     identify_unrecognized_words(file_name,word_dictionary,soundex_dictionary);
     std::cout << std::endl;
-
-    std::cout << "Aqui empiezan las demás pruebas" << std::endl;
-    std::cout << soundexGenerator("Arrum") << std::endl; 
-    std::cout << soundexGenerator("aroma") << std::endl; 
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+    double total_time = duration.count() / 1'000'000.0;
+    std::cout << "Total time: " << total_time << std::endl;
+    return 0;
 }
 
     
