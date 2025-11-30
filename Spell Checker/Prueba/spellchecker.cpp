@@ -158,13 +158,13 @@ std::string suggest_words(const std::string& word, const std::unordered_map<std:
     return "No suggestions"; 
 } 
 
-bool identify_unrecognized_words(const std::string& fileName, const std::unordered_set<std::string>& word_dictionary, const std::unordered_map<std::string, std::vector<std::string>>& soundex_dictionary){ 
+void identify_unrecognized_words(const std::string& fileName, const std::unordered_set<std::string>& word_dictionary, const std::unordered_map<std::string, std::vector<std::string>>& soundex_dictionary){ 
     std::set<Word> unrecognized_words; 
     std::vector<std::string> v_unrecognized_words;
     std::ifstream file(fileName); 
     if(file.fail()){ 
         std::cerr << "Unable to open file: " << fileName << std::endl; 
-        return false; 
+        return; 
     } 
     std::regex reg_exp("[a-zA-Z]+"); 
     std::smatch match; 
@@ -198,7 +198,7 @@ bool identify_unrecognized_words(const std::string& fileName, const std::unorder
         std::cout << "Unrecognized word: " << "\"" << w.text << "\"" << ". First found at line " << w.line << ", column " << w.column << "." << std::endl; 
         std::cout << suggest_words(w.text,soundex_dictionary) << std::endl; 
     } 
-    return true; 
+    return; 
 }
 
 void print_dictionary(const std::unordered_map<std::string, std::vector<std::string>> dictionary_name){ 
@@ -228,7 +228,8 @@ int main(int argc, char* argv[]){
     // print_dictionary(soundex_dictionary); 
     // std::cout << soundexGenerator("Bangalore") << std::endl; 
     // std::cout << soundexGenerator("GeeksforGeeks") << std::endl; 
-    std::cout << identify_unrecognized_words(file_name,word_dictionary,soundex_dictionary) << std::endl;
+    identify_unrecognized_words(file_name,word_dictionary,soundex_dictionary);
+    std::cout << std::endl;
 
     std::cout << "Aqui empiezan las demás pruebas" << std::endl;
     std::cout << soundexGenerator("Arrum") << std::endl; 
