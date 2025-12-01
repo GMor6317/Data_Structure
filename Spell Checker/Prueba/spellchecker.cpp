@@ -169,6 +169,47 @@ void identify_unrecognized_words(const std::string& fileName, const std::unorder
     return; 
 }
 
+
+void alt_identify_unrecognized_words(const std::string& fileName, const std::unordered_set<std::string>& word_dictionary, const std::unordered_map<std::string, std::vector<std::string>>& soundex_dictionary){ 
+    std::set<std::string> first_unrecognized_words; 
+    std::vector<Word> unrecognized_words;
+    std::ifstream file(fileName); 
+    if(file.fail()){ 
+        std::cerr << "Unable to open file: " << fileName << std::endl; 
+        return; 
+    } 
+    std::regex reg_exp("[a-zA-Z]+"); 
+    std::smatch match; 
+    std::string text; 
+    int line = 0; 
+    int column = 0; 
+    while(std::getline(file, text)){ 
+        ++line; 
+        column = 1; 
+        while(std::regex_search(text, match, reg_exp)){ 
+            std::string word = match.str(); 
+            std::string lower; 
+            column += match.position(); 
+            for(char c : word){ 
+                lower += tolower(c); 
+            } 
+            if(word_dictionary.find(lower) == word_dictionary.end()){ 
+                if(first_unrecognized_words.insert(lower).second){
+                    unrecognized_words.push_back({lower, line, column}); 
+                } 
+            } 
+            column += match.length(); 
+            text = match.suffix().str(); 
+        } 
+    } 
+    for(const auto& w : unrecognized_words){ 
+        std::cout << std::endl; 
+        std::cout << "Unrecognized word: " << "\"" << w.text << "\"" << ". First found at line " << w.line << ", column " << w.column << "." << std::endl; 
+        std::cout << suggest_words(w.text,soundex_dictionary) << std::endl; 
+    } 
+    return; 
+}
+
 //Auxiliary function to print the words in a dictionary 
 void print_dictionary(const std::unordered_map<std::string, std::vector<std::string>> dictionary_name){ 
     for(const auto& data : dictionary_name){ 
@@ -214,6 +255,14 @@ int main(int argc, char* argv[]){
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
     double total_time = duration.count() / 1'000'000.0;
     std::cout << "Total time: " << total_time << std::endl;
+
+    auto start1 = std::chrono::high_resolution_clock::now();
+    alt_identify_unrecognized_words(file_name,word_dictionary,soundex_dictionary);
+    std::cout << std::endl;
+    auto stop1 = std::chrono::high_resolution_clock::now();
+    auto duration1 = std::chrono::duration_cast<std::chrono::microseconds>(stop1 - start1);
+    double total_time1 = duration1.count() / 1'000'000.0;
+    std::cout << "Total time: " << total_time1 << std::endl;
     return 0;
 }
 

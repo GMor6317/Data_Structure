@@ -368,7 +368,8 @@ std::string suggest_words(const std::string& word, const std::unordered_map<std:
 }
 
 bool identify_unrecognized_words(const std::string& fileName, const std::unordered_set<std::string>& word_dictionary, const std::unordered_map<std::string, std::vector<std::string>>& soundex_dictionary){
-    std::set<Word> unrecognized_words;
+    std::set<std::string> first_unrecognized_words;
+    std::vector<Word> unrecognized_words;
 
     std::ifstream file(fileName);
     if(file.fail()){
@@ -394,9 +395,8 @@ bool identify_unrecognized_words(const std::string& fileName, const std::unorder
                 lower += tolower(c); 
             }
             if(word_dictionary.find(lower) == word_dictionary.end()){
-                Word w{lower, line, column};
-                if(unrecognized_words.find(w) == unrecognized_words.end()){
-                    unrecognized_words.insert(w);
+                if(first_unrecognized_words.insert(lower).second){
+                    unrecognized_words.push_back({lower, line, column});
                 }
             }
             column += match.length();
