@@ -45,14 +45,14 @@ std::string soundexGenerator(const std::string& token){
     std::string soundex = "";
     soundex += token[0];
 
-    std::unordered_map<std::string, std::string> dictionary{
-        {"BFPV","1"}, 
-        {"CGJKQSXZ", "2"},       
-        {"DT", "3"},
-        {"L", "4"}, 
-        {"MN", "5"}, 
-        {"R", "6"},
-        {"AEIOUHWY", "."}
+    std::unordered_map<std::string, char> dictionary{
+        {"BFPV", '1'},
+        {"CGJKQSXZ", '2'},
+        {"DT", '3'},
+        {"L", '4'},
+        {"MN", '5'},
+        {"R", '6'},
+        {"AEIOUHWY", '.'}
     };
 
     for(int i = 1; i < uppertoken.size(); i++){
@@ -81,6 +81,8 @@ std::string soundexGenerator(const std::string& token){
 
 //Function that creates a dictionary with words that have the same soundex in the words.txt 
 void buildSoundexDictionary(const std::string fileName, std::unordered_map<std::string, std::vector<std::string>>& soundex_dictionary, std::unordered_set<std::string>& words_dictionary){ 
+    soundex_dictionary.reserve(9000);
+    words_dictionary.reserve(50000);
     std::ifstream file(fileName); 
     if(file.fail()){ 
         std::cerr << "Unable to open file: " << fileName << std::endl; 
@@ -193,6 +195,7 @@ int main(int argc, char* argv[]){
     std::unordered_set<std::string> word_dictionary;
     
     //Creating the soundex dictionary of every word in the words.txt
+    auto start = std::chrono::high_resolution_clock::now();
     buildSoundexDictionary("words.txt",soundex_dictionary, word_dictionary); 
 
     //---------- Extra functions to verify the correct functionality of the functions ----------/
@@ -204,13 +207,13 @@ int main(int argc, char* argv[]){
     // std::cout << soundexGenerator("GeeksforGeeks") << std::endl; 
 
     //Identify the unrecognized words of the given .txt
-    // auto start = std::chrono::high_resolution_clock::now();
+    
     identify_unrecognized_words(file_name,word_dictionary,soundex_dictionary);
     std::cout << std::endl;
-    // auto stop = std::chrono::high_resolution_clock::now();
-    // auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-    // double total_time = duration.count() / 1'000'000.0;
-    // std::cout << "Total time: " << total_time << std::endl;
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+    double total_time = duration.count() / 1'000'000.0;
+    std::cout << "Total time: " << total_time << std::endl;
     return 0;
 }
 
