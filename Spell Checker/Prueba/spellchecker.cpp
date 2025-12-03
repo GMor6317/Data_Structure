@@ -45,14 +45,14 @@ std::string soundexGenerator(const std::string& token){
     std::string soundex = "";
     soundex += token[0];
 
-    std::unordered_map<std::string, char> dictionary{
-        {"BFPV", '1'},
-        {"CGJKQSXZ", '2'},
-        {"DT", '3'},
-        {"L", '4'},
-        {"MN", '5'},
-        {"R", '6'},
-        {"AEIOUHWY", '.'}
+    std::unordered_map<std::string, std::string> dictionary{
+        {"BFPV", "1"},
+        {"CGJKQSXZ", "2"},
+        {"DT", "3"},
+        {"L", "4"},
+        {"MN", "5"},
+        {"R", "6"},
+        {"AEIOUHWY", "."}
     };
 
     for(int i = 1; i < uppertoken.size(); i++){
